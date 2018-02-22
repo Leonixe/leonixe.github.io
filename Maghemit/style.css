@@ -1,0 +1,69 @@
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+
+
+
+body #menu #audioContainer{
+  position: fixed;
+  top: -100px;
+  left: 42%;
+  transition: 1s;
+
+}
+
+body #menu {
+
+  position: relative; /* on positionne le conteneur */
+  margin-left: auto;
+  margin-right: auto;
+  width: auto;
+  text-align: left;
+
+  background-color: none;
+
+}
+
+
+
+body #menu #chevron {
+
+  width: 25px;
+  height:25px;
+  position: fixed;
+  left: 49%;
+
+  top : 0px;
+
+
+-ms-transform: rotate(90deg);
+ -webkit-transform: rotate(90deg);
+ transform: rotate(90deg);
+ transition: 1s;
+
+}
+
+body #menu:hover #audioContainer {
+  transition: 1s;
+  top: 0px;
+}
+
+body #menu:hover #chevron {
+  transition: 1s;
+  top: 50px;
+}
+
+body #spaceBar{
+  position: fixed;
+margin-right: auto;
+width: 250px;
+left: 25%;
+margin-left: auto;
+right: 25%;
+bottom: 0px;
+
+color: #4C4C4C;
+font-family: "Courier New"
+}
