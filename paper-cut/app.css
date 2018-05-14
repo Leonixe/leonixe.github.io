@@ -1,0 +1,1 @@
+body{overflow:hidden}#reload{position:absolute;left:0;right:0;width:5vw;height:5vw;bottom:1vw;margin:auto;text-align:center;opacity:.5;cursor:pointer;-webkit-transition:.5s;transition:.5s}#reload:hover{opacity:1;-webkit-transform:rotate(20deg);transform:rotate(20deg)}#reload svg{width:100%;position:relative;left:0;right:0;top:0;bottom:0;margin:auto}
