@@ -1,7 +1,6 @@
 
 // Include the Ashima code here!
 uniform float turbulenceFactor;
-uniform float turbulencePower;
 varying float noise;
 varying vec2 pos;
 varying vec3 colorados;
@@ -188,7 +187,7 @@ void main() {
     float b = 1.0 * pnoise( (.2 + turbulenceFactor * 0.0005) * position + vec3( 2.0 * time ), vec3( 100.0 ) );
     float displacement = - noise + b;
     colorados = normalize(position);
-    vec3 newPosition = position +  normalize(position) * (displacement * turbulencePower);
+    vec3 newPosition = position +  normalize(position) * (displacement*turbulenceFactor / 100.);
     pos = newPosition.xy;
     gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
 
