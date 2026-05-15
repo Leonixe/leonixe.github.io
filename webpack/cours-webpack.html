@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Cours Webpack</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14; --surface: #151821; --surface2: #1c2030; --border: #252a3a;
+    --accent: #8b5cf6; --accent2: #06b6d4; --green: #10b981; --orange: #f59e0b;
+    --red: #ef4444; --text: #e2e8f0; --muted: #64748b; --code-bg: #0a0c10;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 1rem; font-weight: 800; letter-spacing: -0.5px; }
+  .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700; color: white; }
+  .progress-bar-wrap { flex: 1; max-width: 300px; margin: 0 2rem; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s ease; }
+  .progress-text { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+  .layout { display: flex; flex: 1; }
+  nav { width: 265px; min-width: 265px; background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 0; position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto; }
+  .nav-section-title { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); padding: 0 1.25rem; margin-bottom: 0.5rem; margin-top: 1rem; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 0.6rem 1.25rem; cursor: pointer; font-size: 0.84rem; font-weight: 600; color: var(--muted); transition: all 0.15s; border-left: 2px solid transparent; user-select: none; }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(139,92,246,0.08); }
+  .nav-item.done { color: var(--green); }
+  .nav-item.done .nav-dot { background: var(--green); }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.2s; }
+  .nav-item.active .nav-dot { background: var(--accent); }
+  .nav-num { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); width: 18px; flex-shrink: 0; }
+  main { flex: 1; padding: 3rem 4rem; max-width: 880px; }
+  .section { display: none; animation: fadeIn 0.3s ease; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .section-badge { display: inline-flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 10px; border-radius: 4px; margin-bottom: 1rem; }
+  .badge-intro { background: rgba(139,92,246,0.15); color: var(--accent); }
+  .badge-concept { background: rgba(6,182,212,0.15); color: var(--accent2); }
+  .badge-practice { background: rgba(16,185,129,0.15); color: var(--green); }
+  .badge-advanced { background: rgba(245,158,11,0.15); color: var(--orange); }
+  h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 1rem; background: linear-gradient(135deg, var(--text) 0%, var(--muted) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  h2 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.7px; margin: 2.5rem 0 1rem; color: var(--text); }
+  h3 { font-size: 1rem; font-weight: 700; margin: 1.5rem 0 0.5rem; color: var(--accent2); font-family: 'JetBrains Mono', monospace; }
+  p { font-size: 0.92rem; line-height: 1.8; color: #94a3b8; margin-bottom: 1rem; font-weight: 400; }
+  strong { color: var(--text); font-weight: 700; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; overflow-x: auto; margin: 1rem 0 1.5rem; position: relative; }
+  pre::before { content: attr(data-lang); position: absolute; top: 8px; right: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.7; color: #c4b5fd; }
+  .kw{color:#f472b6} .str{color:#86efac} .cmt{color:#4b5563;font-style:italic} .fn{color:#93c5fd} .num{color:#fb923c} .prop{color:#67e8f9}
+  code.inline { background: rgba(139,92,246,0.15); color: #c4b5fd; padding: 2px 6px; border-radius: 4px; font-size: 0.82rem; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; transition: border-color 0.2s; }
+  .card:hover { border-color: var(--accent); }
+  .card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+  .card h4 { font-size: 0.9rem; font-weight: 800; color: var(--text); margin-bottom: 0.4rem; letter-spacing: -0.3px; }
+  .card p { font-size: 0.8rem; line-height: 1.55; margin: 0; }
+
+  /* CONCEPT BLOCK */
+  .concept { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; padding: 1rem 1.25rem; margin: 1rem 0; }
+  .concept.cyan{border-left-color:var(--accent2)} .concept.green{border-left-color:var(--green)} .concept.orange{border-left-color:var(--orange)} .concept.red{border-left-color:var(--red)} .concept.purple{border-left-color:#a78bfa}
+  .concept-title { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.4rem; }
+  .concept.cyan .concept-title{color:var(--accent2)} .concept.green .concept-title{color:var(--green)} .concept.orange .concept-title{color:var(--orange)} .concept.red .concept-title{color:var(--red)} .concept.purple .concept-title{color:#a78bfa}
+
+  /* DEFINITION BOX — pour introduire un terme */
+  .definition { background: rgba(139,92,246,0.07); border: 1px solid rgba(139,92,246,0.25); border-radius: 10px; padding: 1rem 1.25rem; margin: 1.25rem 0; display: flex; gap: 12px; }
+  .definition-icon { font-size: 1.2rem; flex-shrink: 0; }
+  .definition-body { flex: 1; }
+  .definition-term { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.3rem; }
+  .definition p { margin: 0; font-size: 0.84rem; line-height: 1.65; }
+
+  .schema { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 1.5rem 0; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 2; color: var(--muted); }
+  .schema .arrow{color:var(--accent)} .schema .file{color:#86efac} .schema .bundle{color:var(--orange)}
+  .callout { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 0.9rem 1.1rem; margin: 1rem 0; display: flex; gap: 10px; align-items: flex-start; }
+  .callout.tip { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.25); }
+  .callout.info { background: rgba(6,182,212,0.08); border-color: rgba(6,182,212,0.25); }
+  .callout-icon { font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+  .callout p { margin: 0; font-size: 0.84rem; }
+  .quiz { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+  .quiz-q { font-weight: 700; font-size: 0.92rem; margin-bottom: 1rem; color: var(--text); line-height: 1.5; }
+  .quiz-option { padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem; cursor: pointer; font-size: 0.83rem; transition: all 0.15s; }
+  .quiz-option:hover { border-color: var(--accent); background: rgba(139,92,246,0.06); }
+  .quiz-option.correct { border-color: var(--green); background: rgba(16,185,129,0.1); color: var(--green); }
+  .quiz-option.wrong { border-color: var(--red); background: rgba(239,68,68,0.08); color: var(--red); }
+  .quiz-feedback { margin-top: 0.75rem; font-size: 0.83rem; color: #94a3b8; display: none; line-height: 1.6; }
+  .quiz-feedback.show { display: block; }
+  .btn-row { display: flex; gap: 0.75rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+  .btn { padding: 0.65rem 1.4rem; border-radius: 8px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; border: none; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #7c3aed); color: white; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(139,92,246,0.4); }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--muted); }
+  .file-tree { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.9; margin: 1rem 0; }
+  .ft-dir{color:var(--accent2)} .ft-file{color:#94a3b8} .ft-generated{color:var(--muted);font-style:italic} .ft-comment{color:#374151}
+  .steps { }
+  .step { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+  .step-num { width: 32px; height: 32px; min-width: 32px; background: linear-gradient(135deg, var(--accent), #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: white; margin-top: 2px; }
+  .step-content p { margin-bottom: 0.5rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin: 1rem 0 1.5rem; }
+  th { text-align: left; padding: 0.6rem 1rem; background: var(--surface); border: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  td { padding: 0.6rem 1rem; border: 1px solid var(--border); color: #94a3b8; vertical-align: top; line-height: 1.55; }
+  td:first-child { font-family: 'JetBrains Mono', monospace; color: var(--accent2); font-size: 0.8rem; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .done-screen { text-align: center; padding: 3rem 0; }
+  .done-icon { font-size: 4rem; margin-bottom: 1.5rem; display: block; animation: pop 0.5s ease; }
+  @keyframes pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
+  ::-webkit-scrollbar{width:6px;height:6px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  .cmd-row { display: flex; gap: 1rem; margin: 0.75rem 0; flex-wrap: wrap; }
+  .cmd-block { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; flex: 1; min-width: 200px; }
+  .cmd-block .cmd { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #86efac; margin-bottom: 0.3rem; }
+  .cmd-block .cmd-desc { font-size: 0.73rem; color: var(--muted); }
+  .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+  .tool-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; }
+  .tool-card.hl { border-color: var(--accent2); }
+  .tool-card h4 { font-size: 0.95rem; font-weight: 800; color: var(--text); margin-bottom: 0.2rem; }
+  .tool-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); margin-bottom: 0.75rem; }
+  .tool-card ul { list-style: none; }
+  .tool-card ul li { font-size: 0.8rem; color: #94a3b8; padding: 0.2rem 0; }
+  .tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; padding: 2px 7px; border-radius: 4px; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+  .tag-g{background:rgba(16,185,129,0.15);color:var(--green)} .tag-b{background:rgba(6,182,212,0.15);color:var(--accent2)} .tag-o{background:rgba(245,158,11,0.15);color:var(--orange)}
+  .analogy { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; margin: 1rem 0; display: flex; gap: 12px; align-items: flex-start; }
+  .analogy-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .analogy-body p { margin: 0; font-size: 0.85rem; line-height: 1.65; }
+  .analogy-body strong { color: var(--accent2); }
+  ul.list { padding-left: 1.2rem; margin-bottom: 1rem; }
+  ul.list li { font-size: 0.9rem; color: #94a3b8; line-height: 1.75; margin-bottom: 0.2rem; }
+  ul.list li strong { color: var(--text); }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="logo-icon">WP</div>Mini Cours Webpack</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:9.1%"></div></div>
+  <span class="progress-text" id="progressText">1 / 11</span>
+</header>
+
+<div class="layout">
+<nav>
+  <div class="nav-section-title">Introduction</div>
+  <div class="nav-item active" onclick="goTo(0)"><span class="nav-num">01</span><span class="nav-dot"></span>Pourquoi Webpack ?</div>
+  <div class="nav-item" onclick="goTo(1)"><span class="nav-num">02</span><span class="nav-dot"></span>NPM & Yarn</div>
+  <div class="nav-section-title">Les fondamentaux</div>
+  <div class="nav-item" onclick="goTo(2)"><span class="nav-num">03</span><span class="nav-dot"></span>Entry & Output</div>
+  <div class="nav-item" onclick="goTo(3)"><span class="nav-num">04</span><span class="nav-dot"></span>Loaders & Babel</div>
+  <div class="nav-item" onclick="goTo(4)"><span class="nav-num">05</span><span class="nav-dot"></span>Plugins</div>
+  <div class="nav-item" onclick="goTo(5)"><span class="nav-num">06</span><span class="nav-dot"></span>Mode dev / prod</div>
+  <div class="nav-section-title">Mise en pratique</div>
+  <div class="nav-item" onclick="goTo(6)"><span class="nav-num">07</span><span class="nav-dot"></span>Première config</div>
+  <div class="nav-item" onclick="goTo(7)"><span class="nav-num">08</span><span class="nav-dot"></span>Dev Server & HMR</div>
+  <div class="nav-item" onclick="goTo(8)"><span class="nav-num">09</span><span class="nav-dot"></span>Le .gitignore</div>
+  <div class="nav-section-title">Aller plus loin</div>
+  <div class="nav-item" onclick="goTo(9)"><span class="nav-num">10</span><span class="nav-dot"></span>Laravel Mix & co</div>
+  <div class="nav-item" onclick="goTo(10)"><span class="nav-num">11</span><span class="nav-dot"></span>Quiz final</div>
+</nav>
+
+<main>
+
+<!-- ══ 0 : Pourquoi Webpack ══════════════════════════════════ -->
+<div class="section active" id="sec-0">
+  <div class="section-badge badge-intro">Introduction</div>
+  <h1>Pourquoi<br>Webpack ?</h1>
+  <p>Avant de toucher à la moindre ligne de config, il faut comprendre <strong>quel problème Webpack résout</strong>. Sinon, on utilise un outil sans savoir pourquoi — et on ne comprend rien quand ça casse.</p>
+
+  <h2>Le problème du JavaScript "à l'ancienne"</h2>
+  <p>Quand tu écris un site web, tu as un fichier HTML, un ou plusieurs CSS, et du JavaScript. Au début, ça ressemble à ça :</p>
+
+<pre data-lang="index.html"><code><span class="kw">&lt;script</span> <span class="prop">src</span>=<span class="str">"utils.js"</span><span class="kw">&gt;&lt;/script&gt;</span>
+<span class="kw">&lt;script</span> <span class="prop">src</span>=<span class="str">"api.js"</span><span class="kw">&gt;&lt;/script&gt;</span>
+<span class="kw">&lt;script</span> <span class="prop">src</span>=<span class="str">"components/header.js"</span><span class="kw">&gt;&lt;/script&gt;</span>
+<span class="kw">&lt;script</span> <span class="prop">src</span>=<span class="str">"components/nav.js"</span><span class="kw">&gt;&lt;/script&gt;</span>
+<span class="kw">&lt;script</span> <span class="prop">src</span>=<span class="str">"app.js"</span><span class="kw">&gt;&lt;/script&gt;</span></code></pre>
+
+  <p>Le projet grossit. On se retrouve vite avec 15, 20 fichiers JS. Trois problèmes majeurs apparaissent :</p>
+
+  <div class="definition">
+    <div class="definition-icon">🌐</div>
+    <div class="definition-body">
+      <div class="definition-term">Requête HTTP</div>
+      <p>Chaque fois que le navigateur télécharge un fichier (image, CSS, JS…), il fait une <strong>requête HTTP</strong> — une demande au serveur. Chaque requête prend du temps. 20 fichiers JS = 20 requêtes = chargement lent.</p>
+    </div>
+  </div>
+
+  <ul class="list">
+    <li><strong>L'ordre des fichiers est critique :</strong> si <code class="inline">app.js</code> utilise une fonction de <code class="inline">utils.js</code>, il faut charger <code class="inline">utils.js</code> en premier. Un oubli et tout plante.</li>
+    <li><strong>Les variables se polluent entre elles :</strong> toutes les variables JS déclarées dans les fichiers <code class="inline">&lt;script&gt;</code> partagent le même espace global. Un nom en double crée des bugs silencieux et difficiles à tracer.</li>
+    <li><strong>Impossible d'utiliser les modules modernes :</strong> le système <code class="inline">import/export</code> de JavaScript moderne ne fonctionne pas de cette façon.</li>
+  </ul>
+
+  <h2>Ce que fait un bundler</h2>
+
+  <div class="definition">
+    <div class="definition-icon">📦</div>
+    <div class="definition-body">
+      <div class="definition-term">Bundler (en français : "empaqueteur")</div>
+      <p>Un bundler est un outil qui <strong>analyse tous tes fichiers JS, suit leurs dépendances, et les assemble en un ou plusieurs fichiers optimisés</strong> — qu'on appelle des <em>bundles</em>. Le navigateur ne télécharge plus qu'un seul fichier propre au lieu de 20.</p>
+    </div>
+  </div>
+
+  <p>Webpack est le bundler le plus utilisé dans l'industrie. Voici ce qu'il fait concrètement :</p>
+
+  <div class="schema">
+    <span class="file">src/index.js</span> <span class="arrow">──</span> importe <span class="arrow">──→</span> <span class="file">utils.js</span><br>
+    <span style="margin-left:82px"></span><span class="arrow">──</span> importe <span class="arrow">──→</span> <span class="file">header.js</span><br>
+    <span style="margin-left:82px"></span><span class="arrow">──</span> importe <span class="arrow">──→</span> <span class="file">styles.css</span><br><br>
+    <span style="padding:4px 8px;background:rgba(139,92,246,0.2);border-radius:4px;color:#c4b5fd;">Webpack analyse tout, résout les dépendances</span><br><br>
+    <span class="arrow">└──→ </span><span class="bundle">dist/bundle.js</span> <span style="color:var(--muted)">← 1 seul fichier optimisé ✅</span>
+  </div>
+
+  <h2>Ce que Webpack apporte en plus</h2>
+  <div class="cards">
+    <div class="card"><div class="card-icon">⚡</div><h4>Performance</h4><p>Il optimise le code pour que ton site charge le plus vite possible.</p></div>
+    <div class="card"><div class="card-icon">🔧</div><h4>Compatibilité</h4><p>Il transforme ton code moderne pour qu'il fonctionne sur les vieux navigateurs — on verra comment dans la section Loaders.</p></div>
+    <div class="card"><div class="card-icon">🎨</div><h4>CSS & Assets</h4><p>Il peut gérer non seulement le JS, mais aussi le CSS, les images et les fonts.</p></div>
+    <div class="card"><div class="card-icon">🔄</div><h4>Dev Server</h4><p>Il propose un serveur local qui recharge automatiquement le navigateur quand tu sauvegardes.</p></div>
+  </div>
+
+  <div class="callout info"><span class="callout-icon">💡</span><p><strong>En résumé :</strong> Webpack part d'un point d'entrée, suit toutes les dépendances (<code class="inline">import</code>), et produit un résultat propre et optimisé. On verra chacun de ces mécanismes dans les sections suivantes.</p></div>
+
+  <div class="btn-row"><button class="btn btn-primary" onclick="goTo(1)">Section suivante →</button></div>
+</div>
+
+<!-- ══ 1 : NPM & Yarn ════════════════════════════════════════ -->
+<div class="section" id="sec-1">
+  <div class="section-badge badge-intro">Les outils</div>
+  <h1>NPM<br>& Yarn</h1>
+  <p>Avant de pouvoir utiliser Webpack, il faut comprendre <strong>comment les outils s'installent</strong> dans un projet JavaScript. C'est là qu'on parle de npm et de Yarn — mais aussi de Node.js, qui est le fondement de tout ça.</p>
+
+  <h2>Node.js — la base de tout</h2>
+
+  <div class="definition">
+    <div class="definition-icon">⚙️</div>
+    <div class="definition-body">
+      <div class="definition-term">Node.js</div>
+      <p>JavaScript a été inventé pour tourner dans le navigateur. <strong>Node.js permet de faire tourner du JavaScript en dehors du navigateur</strong>, directement sur ta machine ou un serveur. Webpack, npm, et tous les outils de développement web modernes tournent grâce à Node.js. C'est une installation obligatoire avant de commencer.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🏭</div>
+    <div class="analogy-body"><p>Imagine que JavaScript est un ouvrier qui ne peut normalement travailler qu'en usine (le navigateur). <strong>Node.js, c'est lui donner la possibilité de travailler aussi en atelier</strong> — sur ta machine, sans navigateur. Webpack est l'un de ces travaux d'atelier.</p></div>
+  </div>
+
+  <h2>C'est quoi un gestionnaire de paquets ?</h2>
+
+  <div class="definition">
+    <div class="definition-icon">📦</div>
+    <div class="definition-body">
+      <div class="definition-term">Paquet (ou librairie)</div>
+      <p>Un <strong>paquet</strong>, c'est du code écrit par d'autres développeurs et mis à disposition gratuitement. Webpack, Babel, React, jQuery sont tous des paquets. Des millions sont disponibles sur <strong>npmjs.com</strong>, le registre public de JavaScript.</p>
+    </div>
+  </div>
+
+  <p>Un <strong>gestionnaire de paquets</strong>, c'est l'outil qui va chercher et installer ces paquets à ta place en une seule commande — sans que tu aies à télécharger des fichiers à la main.</p>
+
+  <div class="cards">
+    <div class="card"><div class="card-icon">📦</div><h4>npm</h4><p><strong>Node Package Manager.</strong> Installé automatiquement avec Node.js. Le plus répandu, accède à npmjs.com qui héberge des millions de paquets.</p></div>
+    <div class="card"><div class="card-icon">🧶</div><h4>Yarn</h4><p>Alternative créée par Facebook. Plus rapide grâce à un système de cache avancé. Les deux font la même chose, avec une syntaxe légèrement différente.</p></div>
+  </div>
+
+  <h2>Le fichier package.json — la carte d'identité du projet</h2>
+  <p>C'est un fichier texte créé à la racine de ton projet. Il <strong>liste toutes les dépendances dont ton projet a besoin</strong>. Quand un collègue clone ton projet depuis GitHub, il n'a qu'à faire <code class="inline">npm install</code> : tout s'installe automatiquement depuis ce fichier.</p>
+
+<pre data-lang="package.json"><code>{
+  <span class="prop">"name"</span>: <span class="str">"mon-projet"</span>,
+  <span class="prop">"version"</span>: <span class="str">"1.0.0"</span>,
+
+  <span class="cmt">// Les commandes qu'on peut lancer avec : npm run &lt;nom&gt;</span>
+  <span class="prop">"scripts"</span>: {
+    <span class="prop">"start"</span>: <span class="str">"webpack serve"</span>,
+    <span class="prop">"build"</span>: <span class="str">"webpack --mode production"</span>
+  },
+
+  <span class="cmt">// Librairies dont TON APPLI a besoin pour fonctionner en ligne</span>
+  <span class="prop">"dependencies"</span>: {
+    <span class="prop">"react"</span>: <span class="str">"^18.2.0"</span>
+  },
+
+  <span class="cmt">// Outils dont TU AS BESOIN pour CONSTRUIRE l'appli (pas en prod)</span>
+  <span class="prop">"devDependencies"</span>: {
+    <span class="prop">"webpack"</span>: <span class="str">"^5.88.0"</span>,
+    <span class="prop">"webpack-cli"</span>: <span class="str">"^5.1.0"</span>,
+    <span class="prop">"babel-loader"</span>: <span class="str">"^9.1.0"</span>
+  }
+}</code></pre>
+
+  <div class="concept cyan">
+    <div class="concept-title">dependencies vs devDependencies</div>
+    <p style="margin:0;font-size:0.86rem;"><strong>dependencies</strong> = ce dont ton appli a besoin pour <em>tourner</em> une fois mise en ligne (ex : React, une librairie d'animations). <strong>devDependencies</strong> = les outils dont tu as besoin pour <em>construire</em> l'appli (Webpack, Babel, ESLint…). Ces derniers ne seront pas installés quand ton appli est déployée en production : ça allège le déploiement.</p>
+  </div>
+
+  <h2>Les numéros de version</h2>
+  <p>Tu remarques le <code class="inline">^</code> devant les numéros de version, comme <code class="inline">"webpack": "^5.88.0"</code>. Ça signifie <strong>"version 5.88.0 ou une version compatible plus récente"</strong>. Le numéro suit un format à 3 chiffres : <code class="inline">MAJEUR.MINEUR.CORRECTIF</code>. Le <code class="inline">^</code> autorise les mises à jour mineures et correctifs, mais pas les changements majeurs (qui peuvent casser la compatibilité).</p>
+
+  <h2>Les commandes essentielles</h2>
+  <div class="cmd-row">
+    <div class="cmd-block"><div class="cmd">npm init -y</div><div class="cmd-desc">Crée un package.json vide dans le dossier</div></div>
+    <div class="cmd-block"><div class="cmd">npm install</div><div class="cmd-desc">Installe toutes les dépendances listées dans package.json</div></div>
+  </div>
+  <div class="cmd-row">
+    <div class="cmd-block"><div class="cmd">npm install webpack --save-dev</div><div class="cmd-desc">Installe webpack en devDependency</div></div>
+    <div class="cmd-block"><div class="cmd">npm install react --save</div><div class="cmd-desc">Installe react en dependency</div></div>
+  </div>
+  <div class="cmd-row">
+    <div class="cmd-block"><div class="cmd">npm run build</div><div class="cmd-desc">Lance le script "build" défini dans package.json</div></div>
+    <div class="cmd-block"><div class="cmd">npm uninstall webpack</div><div class="cmd-desc">Désinstalle un paquet et le retire du package.json</div></div>
+  </div>
+
+  <h2>npm vs Yarn — les équivalences</h2>
+  <table>
+    <tr><th>npm</th><th>Yarn</th><th>Ce que ça fait</th></tr>
+    <tr><td>npm install</td><td>yarn</td><td>Installe toutes les dépendances</td></tr>
+    <tr><td>npm install webpack --save-dev</td><td>yarn add webpack --dev</td><td>Ajoute un outil de dev</td></tr>
+    <tr><td>npm run build</td><td>yarn build</td><td>Lance un script</td></tr>
+    <tr><td>npm uninstall webpack</td><td>yarn remove webpack</td><td>Supprime un paquet</td></tr>
+    <tr><td>package-lock.json</td><td>yarn.lock</td><td>Fichier de verrouillage des versions</td></tr>
+  </table>
+
+  <h3>Le fichier lock — pourquoi le commiter sur Git ?</h3>
+  <p>Le <code class="inline">package-lock.json</code> (ou <code class="inline">yarn.lock</code>) <strong>enregistre les versions exactes</strong> de chaque paquet installé sur ta machine. Sans lui, ton collègue qui fait <code class="inline">npm install</code> demain pourrait obtenir des versions légèrement différentes — et des bugs impossibles à reproduire. Ce fichier garantit que tout le monde a exactement la même chose. <strong>Il doit toujours être commité sur Git.</strong></p>
+
+  <div class="callout tip"><span class="callout-icon">✅</span><p><strong>Conseil :</strong> Choisissez npm ou Yarn au début d'un projet et ne changez plus. Mélanger les deux crée deux fichiers lock incompatibles et des comportements imprévisibles.</p></div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo(0)">← Retour</button>
+    <button class="btn btn-primary" onclick="goTo(2)">Section suivante →</button>
+  </div>
+</div>
+
+<!-- ══ 2 : Entry & Output ════════════════════════════════════ -->
+<div class="section" id="sec-2">
+  <div class="section-badge badge-concept">Concept</div>
+  <h1>Entry<br>& Output</h1>
+  <p>Webpack a besoin de savoir deux choses fondamentales : <strong>d'où il part</strong> et <strong>où il doit déposer le résultat</strong>. Ce sont les propriétés <code class="inline">entry</code> et <code class="inline">output</code>.</p>
+
+  <h2>Entry — le point de départ</h2>
+
+  <div class="definition">
+    <div class="definition-icon">🚪</div>
+    <div class="definition-body">
+      <div class="definition-term">Entry (point d'entrée)</div>
+      <p>C'est le <strong>premier fichier JS que Webpack va lire</strong>. À partir de là, il suit tous les <code class="inline">import</code> pour découvrir tous les fichiers dont ton projet a besoin — on appelle ça le <em>graphe de dépendances</em>. C'est comme partir d'une page d'un livre et suivre tous les liens pour retrouver tous les documents liés.</p>
+    </div>
+  </div>
+
+  <h2>Output — le dossier de sortie</h2>
+
+  <div class="definition">
+    <div class="definition-icon">📤</div>
+    <div class="definition-body">
+      <div class="definition-term">Output (sortie)</div>
+      <p>C'est <strong>là où Webpack va écrire le résultat</strong> une fois tout assemblé. Par convention, dans un dossier <code class="inline">dist/</code> (abréviation de <em>distribution</em>). C'est ce dossier qu'on envoie en production sur un serveur.</p>
+    </div>
+  </div>
+
+  <h2>La config minimale</h2>
+  <p>Toute la configuration Webpack se passe dans un fichier <code class="inline">webpack.config.js</code> à la racine du projet. Voici la version la plus simple possible :</p>
+
+<pre data-lang="webpack.config.js"><code><span class="cmt">// "path" est un module natif de Node.js pour manipuler les chemins de fichiers</span>
+<span class="kw">const</span> path = <span class="fn">require</span>(<span class="str">'path'</span>);
+
+module.<span class="prop">exports</span> = {
+
+  <span class="cmt">// D'où Webpack part</span>
+  <span class="prop">entry</span>: <span class="str">'./src/index.js'</span>,
+
+  <span class="cmt">// Où Webpack dépose le résultat</span>
+  <span class="prop">output</span>: {
+    <span class="prop">filename</span>: <span class="str">'bundle.js'</span>,           <span class="cmt">// Nom du fichier généré</span>
+    <span class="prop">path</span>: path.<span class="fn">resolve</span>(__dirname, <span class="str">'dist'</span>), <span class="cmt">// Chemin absolu vers dist/</span>
+    <span class="prop">clean</span>: <span class="kw">true</span>,                    <span class="cmt">// Nettoie dist/ avant chaque build</span>
+  },
+
+};</code></pre>
+
+  <h3>Pourquoi path.resolve() et pas juste "./dist" ?</h3>
+  <p>Webpack exige un <strong>chemin absolu</strong> (par exemple <code class="inline">/Users/romain/mon-projet/dist</code>) et non un chemin relatif (comme <code class="inline">./dist</code>). <code class="inline">path.resolve(__dirname, 'dist')</code> construit ce chemin complet de façon automatique, peu importe l'endroit où est installé le projet ou l'OS utilisé (Windows, Mac, Linux).</p>
+
+  <div class="callout tip"><span class="callout-icon">✅</span><p><strong>Convention :</strong> On met toujours le code source dans <code class="inline">src/</code> et le résultat généré dans <code class="inline">dist/</code>. Le dossier <code class="inline">dist/</code> est toujours dans le <code class="inline">.gitignore</code> car il est généré automatiquement — on en reparlera dans la section dédiée.</p></div>
+
+  <h2>Points d'entrée multiples</h2>
+  <p>Pour des projets plus complexes (par exemple une partie publique et une partie admin séparées), on peut avoir plusieurs points d'entrée :</p>
+
+<pre data-lang="webpack.config.js"><code><span class="prop">entry</span>: {
+  <span class="prop">app</span>: <span class="str">'./src/app.js'</span>,       <span class="cmt">// Génèrera app.bundle.js</span>
+  <span class="prop">admin</span>: <span class="str">'./src/admin.js'</span>,   <span class="cmt">// Génèrera admin.bundle.js</span>
+},
+<span class="prop">output</span>: {
+  <span class="prop">filename</span>: <span class="str">'[name].bundle.js'</span>, <span class="cmt">// [name] sera remplacé par "app" ou "admin"</span>
+  <span class="prop">path</span>: path.<span class="fn">resolve</span>(__dirname, <span class="str">'dist'</span>),
+},</code></pre>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo(1)">← Retour</button>
+    <button class="btn btn-primary" onclick="goTo(3)">Section suivante →</button>
+  </div>
+</div>
+
+<!-- ══ 3 : Loaders & Babel ═══════════════════════════════════ -->
+<div class="section" id="sec-3">
+  <div class="section-badge badge-concept">Concept</div>
+  <h1>Loaders<br>& Babel</h1>
+  <p>Par défaut, Webpack ne sait lire que le JavaScript. Les <strong>loaders</strong> lui permettent de comprendre d'autres types de fichiers : CSS, images, SCSS… Et c'est aussi ici qu'entre en jeu <strong>Babel</strong>, l'un des outils les plus importants de l'écosystème.</p>
+
+  <h2>ES6 — c'est quoi ?</h2>
+
+  <div class="definition">
+    <div class="definition-icon">📜</div>
+    <div class="definition-body">
+      <div class="definition-term">ECMAScript (ES) — les versions de JavaScript</div>
+      <p>JavaScript suit une norme officielle appelée <strong>ECMAScript</strong>. Chaque année, une nouvelle version sort avec de nouvelles fonctionnalités. <strong>ES6</strong> (sorti en 2015, aussi appelé ES2015) a été une révolution : il a introduit <code class="inline">let</code>, <code class="inline">const</code>, les fonctions fléchées (<code class="inline">=></code>), les classes, <code class="inline">import/export</code>, et bien d'autres choses. Quand on dit "JavaScript moderne" ou "ES6+", on parle de cette version et celles qui ont suivi (ES7, ES8, ES2020, etc.).</p>
+    </div>
+  </div>
+
+  <h2>Le problème de compatibilité navigateur</h2>
+  <p>Le JavaScript moderne (ES6+) est pratique à écrire, mais <strong>les anciens navigateurs ne comprennent pas toute cette syntaxe</strong>. Un navigateur datant de 3-4 ans peut planter sur du code ES6 parfaitement valide.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">🗣️</div>
+    <div class="analogy-body"><p>Imagine que tu écris un texte en français moderne avec des anglicismes courants. Un lecteur qui n'a appris le français qu'en 2010 ne comprendra pas certains mots. <strong>Babel, c'est le traducteur</strong> qui convertit ton français moderne en version compréhensible par tout le monde.</p></div>
+  </div>
+
+  <h2>Babel — le transpileur</h2>
+
+  <div class="definition">
+    <div class="definition-icon">🔄</div>
+    <div class="definition-body">
+      <div class="definition-term">Transpilation</div>
+      <p><strong>Transpiler</strong> = transformer du code source dans un langage vers du code source dans un autre langage (ou une autre version du même langage). Babel <strong>transpile ES6+ vers ES5</strong> — la version de JavaScript comprise par tous les navigateurs, même les plus anciens.</p>
+    </div>
+  </div>
+
+<pre data-lang="js"><code><span class="cmt">// Ce que TU écris (ES6+) — moderne et lisible</span>
+<span class="kw">const</span> <span class="fn">saluer</span> = (<span class="prop">nom</span>) => <span class="str">`Bonjour ${nom} !`</span>;
+
+<span class="cmt">// Ce que BABEL génère (ES5) — compris par tous les navigateurs</span>
+<span class="kw">var</span> <span class="fn">saluer</span> = <span class="kw">function</span>(<span class="prop">nom</span>) {
+  <span class="kw">return</span> <span class="str">'Bonjour '</span> + nom + <span class="str">' !'</span>;
+};</code></pre>
+
+  <p>Tu écris en ES6+ confortable, Babel s'occupe de la compatibilité. C'est le meilleur des deux mondes.</p>
+
+  <h2>C'est quoi un loader ?</h2>
+
+  <div class="definition">
+    <div class="definition-icon">🔌</div>
+    <div class="definition-body">
+      <div class="definition-term">Loader</div>
+      <p>Un loader est un <strong>module qui enseigne à Webpack comment traiter un type de fichier précis</strong>. Sans loader CSS, Webpack ne sait pas quoi faire d'un fichier <code class="inline">.css</code> et plante. Avec le bon loader, il sait le lire, le transformer, et l'inclure dans le bundle.</p>
+    </div>
+  </div>
+
+  <div class="callout info"><span class="callout-icon">📌</span><p><strong>Règle de base :</strong> 1 type de fichier = 1 (ou plusieurs) loader(s). Quand plusieurs loaders sont listés, ils s'appliquent <strong>de droite à gauche</strong> dans le tableau <code class="inline">use</code>.</p></div>
+
+  <h2>Les loaders les plus courants</h2>
+  <table>
+    <tr><th>Loader</th><th>Rôle</th></tr>
+    <tr><td>babel-loader</td><td>Passe chaque fichier JS dans Babel pour transpiler ES6+ → ES5</td></tr>
+    <tr><td>css-loader</td><td>Permet à Webpack de lire et comprendre les fichiers CSS</td></tr>
+    <tr><td>style-loader</td><td>Injecte le CSS lu dans le DOM (le contenu visible de la page) via une balise <code class="inline">&lt;style&gt;</code></td></tr>
+    <tr><td>sass-loader</td><td>Compile le SCSS (CSS avec des super-pouvoirs : variables, imbrication…) en CSS standard</td></tr>
+    <tr><td>file-loader</td><td>Gère les images et les fonts — les copie dans dist/ et retourne leur chemin</td></tr>
+  </table>
+
+  <h2>Configuration dans webpack.config.js</h2>
+
+<pre data-lang="webpack.config.js"><code>module.<span class="prop">exports</span> = {
+  <span class="prop">module</span>: {
+    <span class="prop">rules</span>: [   <span class="cmt">// Un tableau de règles : une par type de fichier</span>
+
+      <span class="cmt">// Règle 1 : tous les fichiers .js passent par Babel</span>
+      {
+        <span class="prop">test</span>: <span class="kw">/\.js$/</span>,         <span class="cmt">// Expression régulière : "fichier dont l'extension est .js"</span>
+        <span class="prop">exclude</span>: <span class="kw">/node_modules/</span>, <span class="cmt">// On n'essaie pas de transpiler les librairies tierces</span>
+        <span class="prop">use</span>: <span class="str">'babel-loader'</span>,
+      },
+
+      <span class="cmt">// Règle 2 : les fichiers CSS</span>
+      {
+        <span class="prop">test</span>: <span class="kw">/\.css$/</span>,
+        <span class="cmt">// Ordre d'exécution : css-loader d'abord (droite), style-loader ensuite (gauche)</span>
+        <span class="prop">use</span>: [<span class="str">'style-loader'</span>, <span class="str">'css-loader'</span>],
+      },
+
+      <span class="cmt">// Règle 3 : les images (Webpack 5 — plus besoin de file-loader)</span>
+      {
+        <span class="prop">test</span>: <span class="kw">/\.(png|jpg|gif|svg)$/i</span>,
+        <span class="prop">type</span>: <span class="str">'asset/resource'</span>,
+      },
+
+    ],
+  },
+};</code></pre>
+
+  <h3>Le fichier .babelrc — la config de Babel</h3>
+  <p>Babel a besoin de sa propre configuration pour savoir quoi transpiler. On crée un fichier <code class="inline">.babelrc</code> à la racine :</p>
+
+<pre data-lang=".babelrc"><code>{
+  <span class="prop">"presets"</span>: [
+    [<span class="str">"@babel/preset-env"</span>, {
+      <span class="cmt">// "Vise les navigateurs qui ont plus de 0.25% de parts de marché"</span>
+      <span class="prop">"targets"</span>: <span class="str">"&gt; 0.25%, not dead"</span>
+    }]
+  ]
+}</code></pre>
+
+  <div class="callout"><span class="callout-icon">⚠️</span><p><strong>Piège classique :</strong> <code class="inline">style-loader</code> injecte le CSS dans le DOM via du JavaScript (pratique en développement). Mais en production, on préfère un vrai fichier <code class="inline">.css</code> séparé pour de meilleures performances. C'est ce que fait <code class="inline">MiniCssExtractPlugin</code> — on en parle dans la section Plugins.</p></div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo(2)">← Retour</button>
+    <button class="btn btn-primary" onclick="goTo(4)">Section suivante →</button>
+  </div>
+</div>
+
+<!-- ══ 4 : Plugins ═══════════════════════════════════════════ -->
+<div class="section" id="sec-4">
+  <div class="section-badge badge-concept">Concept</div>
+  <h1>Les Plugins</h1>
+  <p>Les loaders transforment des fichiers. Les <strong>plugins</strong> font tout le reste : ils interviennent sur l'ensemble du processus de build — générer un fichier HTML, extraire le CSS dans un vrai fichier, optimiser les images, etc.</p>
+
+  <div class="definition">
+    <div class="definition-icon">🔧</div>
+    <div class="definition-body">
+      <div class="definition-term">Plugin</div>
+      <p>Un plugin est un <strong>module qui s'accroche au processus de build de Webpack</strong> pour effectuer des actions globales. Là où un loader ne peut traiter qu'un seul fichier à la fois, un plugin peut agir sur l'ensemble du bundle, créer des fichiers, injecter des variables, etc.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🏗️</div>
+    <div class="analogy-body"><p>Si les loaders sont les <strong>ouvriers spécialisés</strong> (le plaquiste, l'électricien…), les plugins sont le <strong>chef de chantier</strong> qui coordonne, génère les documents administratifs et s'assure que tout le bâtiment est cohérent.</p></div>
+  </div>
+
+  <h2>Les plugins essentiels</h2>
+  <div class="cards">
+    <div class="card"><div class="card-icon">🏗️</div><h4>HtmlWebpackPlugin</h4><p>Génère automatiquement un fichier <code class="inline">index.html</code> dans <code class="inline">dist/</code> et y insère les balises <code class="inline">&lt;script&gt;</code> et <code class="inline">&lt;link&gt;</code> pointant vers tes bundles. Indispensable.</p></div>
+    <div class="card"><div class="card-icon">🎨</div><h4>MiniCssExtractPlugin</h4><p>Extrait tout le CSS dans un vrai fichier <code class="inline">.css</code> séparé, au lieu de l'injecter via JavaScript. À utiliser en production pour de meilleures performances.</p></div>
+    <div class="card"><div class="card-icon">🌍</div><h4>DefinePlugin</h4><p>Définit des variables globales accessibles partout dans le code (ex : savoir si on est en développement ou en production).</p></div>
+    <div class="card"><div class="card-icon">📉</div><h4>BundleAnalyzerPlugin</h4><p>Génère un rapport visuel de la taille de chaque morceau du bundle. Utile pour diagnostiquer pourquoi ton application est trop lourde.</p></div>
+  </div>
+
+  <h2>Configuration</h2>
+
+<pre data-lang="webpack.config.js"><code><span class="kw">const</span> HtmlWebpackPlugin = <span class="fn">require</span>(<span class="str">'html-webpack-plugin'</span>);
+<span class="kw">const</span> MiniCssExtractPlugin = <span class="fn">require</span>(<span class="str">'mini-css-extract-plugin'</span>);
+
+module.<span class="prop">exports</span> = {
+  <span class="prop">plugins</span>: [
+
+    <span class="cmt">// Génère dist/index.html basé sur notre template src/index.html</span>
+    <span class="kw">new</span> <span class="fn">HtmlWebpackPlugin</span>({
+      <span class="prop">template</span>: <span class="str">'./src/index.html'</span>,
+    }),
+
+    <span class="cmt">// Extrait le CSS dans un fichier séparé avec un hash dans le nom</span>
+    <span class="kw">new</span> <span class="fn">MiniCssExtractPlugin</span>({
+      <span class="prop">filename</span>: <span class="str">'[name].[contenthash].css'</span>,
+    }),
+
+  ],
+};</code></pre>
+
+  <h2>Le cache navigateur et le contenthash</h2>
+
+  <div class="definition">
+    <div class="definition-icon">🗄️</div>
+    <div class="definition-body">
+      <div class="definition-term">Cache navigateur</div>
+      <p>Pour aller plus vite, le navigateur <strong>mémorise les fichiers déjà téléchargés</strong>. Si tu revisites un site, il recharge les fichiers depuis sa mémoire plutôt que de les re-télécharger. Problème : si tu modifies ton CSS mais que le fichier s'appelle toujours <code class="inline">style.css</code>, le navigateur peut afficher l'ancienne version sans le savoir.</p>
+    </div>
+  </div>
+
+  <div class="definition">
+    <div class="definition-icon">🔑</div>
+    <div class="definition-body">
+      <div class="definition-term">Hash & Cache Busting</div>
+      <p>Un <strong>hash</strong> est une empreinte numérique unique générée à partir du contenu d'un fichier. Si le contenu change, le hash change. En nommant les fichiers <code class="inline">style.a3f9c2.css</code>, on force le navigateur à télécharger la nouvelle version quand le hash change. C'est le <strong>cache busting</strong> ("contournement du cache").</p>
+    </div>
+  </div>
+
+  <p>Le <code class="inline">[contenthash]</code> dans le nom de fichier est automatiquement calculé par Webpack. Résultat : si ton CSS ne change pas, le navigateur garde sa version en cache. Si tu le modifies, le hash change → nouveau nom de fichier → le navigateur télécharge la nouvelle version.</p>
+
+  <div class="callout tip"><span class="callout-icon">✅</span><p><strong>Différence loader / plugin :</strong> Si tu hésites entre les deux, pose-toi la question : "est-ce que ça concerne la transformation d'un <em>type de fichier</em> ou une action sur <em>l'ensemble du build</em> ?" Fichier → loader. Build entier → plugin.</p></div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo(3)">← Retour</button>
+    <button class="btn btn-primary" onclick="goTo(5)">Section suivante →</button>
+  </div>
+</div>
+
+<!-- ══ 5 : Mode ══════════════════════════════════════════════ -->
+<div class="section" id="sec-5">
+  <div class="section-badge badge-concept">Concept</div>
+  <h1>Mode dev<br>& prod</h1>
+  <p>La propriété <code class="inline">mode</code> dit à Webpack dans quel contexte il tourne. Selon la valeur, tout un ensemble de comportements change automatiquement. C'est l'un des concepts les plus importants pour avoir un workflow professionnel.</p>
+
+  <div class="concept green">
+    <div class="concept-title">mode: "development" — pour coder</div>
+    <p style="margin:0;font-size:0.86rem;">Build rapide, code <em>lisible</em> (non transformé), outils de débogage activés. On s'en fiche de la taille du fichier, on veut être productif.</p>
+  </div>
+  <div class="concept orange">
+    <div class="concept-title">mode: "production" — pour mettre en ligne</div>
+    <p style="margin:0;font-size:0.86rem;">Build optimisé au maximum : code compressé, inutile supprimé. On veut que le site soit le plus rapide possible pour les utilisateurs.</p>
+  </div>
+
+  <h2>Les optimisations du mode production</h2>
+
+  <div class="definition">
+    <div class="definition-icon">📉</div>
+    <div class="definition-body">
+      <div class="definition-term">Minification</div>
+      <p>La <strong>minification</strong> consiste à supprimer tout ce qui n'est pas nécessaire à l'exécution du code : les espaces, les retours à la ligne, les commentaires, et à raccourcir les noms de variables. Le code devient illisible pour un humain, mais le navigateur s'en fiche — il l'exécute pareil. Résultat : un fichier bien plus léger à télécharger.</p>
+    </div>
+  </div>
+
+<pre data-lang="js"><code><span class="cmt">// Avant minification (lisible, 180 octets)</span>
+<span class="kw">function</span> <span class="fn">calculerTotal</span>(prix, quantite) {
+  <span class="kw">const</span> total = prix * quantite;
+  <span class="kw">return</span> total;
+}
+
+<span class="cmt">// Après minification (illisible, 48 octets)</span>
+<span class="kw">function</span> <span class="fn">c</span>(a,b){<span class="kw">return</span> a*b}</code></pre>
+
+  <div class="definition">
+    <div class="definition-icon">🌳</div>
+    <div class="definition-body">
+      <div class="definition-term">Tree-shaking (littéralement : "secouer l'arbre")</div>
+      <p>Imagine une librairie de 500 fonctions dont tu n'utilises que 3. Le <strong>tree-shaking</strong> analyse statiquement tes <code class="inline">import</code> et <strong>supprime du bundle tout le code que tu n'utilises pas</strong>. C'est comme secouer un arbre pour ne garder que les fruits mûrs et laisser tomber les feuilles mortes (le code inutile).</p>
+    </div>
+  </div>
+
+<pre data-lang="js"><code><span class="cmt">// ❌ Mauvais pour le tree-shaking : importe TOUTE la librairie lodash</span>
+<span class="kw">import</span> _ <span class="kw">from</span> <span class="str">'lodash'</span>;
+
+<span class="cmt">// ✅ Bon : Webpack ne met dans le bundle QUE la fonction debounce</span>
+<span class="kw">import</span> { debounce } <span class="kw">from</span> <span class="str">'lodash-es'</span>;</code></pre>
+
+  <h2>Les source maps — déboguer sans se perdre</h2>
+
+  <div class="definition">
+    <div class="definition-icon">🗺️</div>
+    <div class="definition-body">
+      <div class="definition-term">Source Map</div>
+      <p>Webpack transforme et regroupe tout ton code. Quand une erreur survient, le navigateur t'indique une ligne dans le fichier <em>transformé</em> — ce qui n'a aucun sens. Les <strong>source maps</strong> sont des fichiers qui font le lien entre le code transformé et ton code original. Avec elles, le navigateur t'affiche l'erreur dans ton vrai fichier, à la bonne ligne.</p>
+    </div>
+  </div>
+
+<pre data-lang="webpack.config.js"><code>module.<span class="prop">exports</span> = {
+  <span class="prop">mode</span>: <span class="str">'development'</span>,
+  <span class="prop">devtool</span>: <span class="str">'source-map'</span>, <span class="cmt">// Active les source maps pour déboguer</span>
+};</code></pre>
+
+  <h2>Deux fichiers de config — une bonne pratique</h2>
+  <p>En pratique, on sépare la configuration en deux fichiers pour ne pas faire de compromis entre vitesse de dev et optimisation de prod :</p>
+
+  <div class="file-tree">
+    <span class="ft-dir">webpack.common.js</span>  <span class="ft-comment">← config partagée (entry, output, loaders)</span><br>
+    <span class="ft-dir">webpack.dev.js</span>     <span class="ft-comment">← dev server, source maps, style-loader</span><br>
+    <span class="ft-dir">webpack.prod.js</span>    <span class="ft-comment">← MiniCssExtract, contenthash, minification</span>
+  </div>
+
+<pre data-lang="package.json"><code>{
+  <span class="prop">"scripts"</span>: {
+    <span class="prop">"start"</span>: <span class="str">"webpack serve --config webpack.dev.js"</span>,
+    <span class="prop">"build"</span>: <span class="str">"webpack --config webpack.prod.js"</span>
+  }
+}</code></pre>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo(4)">← Retour</button>
+    <button class="btn btn-primary" onclick="goTo(6)">Passer à la pratique →</button>
+  </div>
+</div>
+
+<!-- ══ 6 : Première config ═══════════════════════════════════ -->
+<div class="section" id="sec-6">
+  <div class="section-badge badge-practice">Pratique</div>
+  <h1>Première<br>config complète</h1>
+  <p>On assemble tout ce qu'on vient de voir pour créer un projet de base fonctionnel, du <code class="inline">npm init</code> au premier build.</p>
+
+  <h2>Structure du projet</h2>
+  <div class="file-tree">
+    <span class="ft-dir">mon-projet/</span><br>
+    <span class="ft-comment">├── </span><span class="ft-dir">src/</span>               <span class="ft-comment">← ton code SOURCE (à versionner sur Git)</span><br>
+    <span class="ft-comment">│   ├── </span><span class="ft-file">index.js</span>       <span class="ft-comment">← entry point Webpack</span><br>
+    <span class="ft-comment">│   ├── </span><span class="ft-file">index.html</span>     <span class="ft-comment">← template HTML</span><br>
+    <span class="ft-comment">│   └── </span><span class="ft-dir">styles/</span><br>
+    <span class="ft-comment">│       └── </span><span class="ft-file">main.css</span><br>
+    <span class="ft-generated">├── dist/</span>              <span class="ft-comment">← ⛔ GÉNÉRÉ par Webpack (dans .gitignore)</span><br>
+    <span class="ft-comment">├── </span><span class="ft-file">webpack.config.js</span>  <span class="ft-comment">← config Webpack</span><br>
+    <span class="ft-comment">├── </span><span class="ft-file">.babelrc</span>          <span class="ft-comment">← config Babel</span><br>
+    <span class="ft-comment">├── </span><span class="ft-file">.gitignore</span>        <span class="ft-comment">← fichiers à ignorer sur Git</span><br>
+    <span class="ft-comment">└── </span><span class="ft-file">package.json</span>      <span class="ft-comment">← liste des dépendances</span>
+  </div>
+
+  <h2>Installation pas à pas</h2>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content">
+      <p><strong>Crée le dossier et initialise le projet</strong></p>
+<pre data-lang="bash"><code>mkdir mon-projet && cd mon-projet
+npm init -y</code></pre>
+      <p>→ Crée le fichier <code class="inline">package.json</code> avec des valeurs par défaut.</p>
+    </div></div>
+
+    <div class="step"><div class="step-num">2</div><div class="step-content">
+      <p><strong>Installe Webpack et ses dépendances</strong></p>
+<pre data-lang="bash"><code>npm install --save-dev \
+  webpack webpack-cli \
+  babel-loader @babel/core @babel/preset-env \
+  css-loader style-loader \
+  html-webpack-plugin</code></pre>
+      <p>→ <code class="inline">--save-dev</code> : ces outils vont dans <code class="inline">devDependencies</code> car ils ne sont utiles qu'en développement.</p>
+    </div></div>
+
+    <div class="step"><div class="step-num">3</div><div class="step-content">
+      <p><strong>Crée le fichier .babelrc</strong></p>
+<pre data-lang=".babelrc"><code>{
+  <span class="prop">"presets"</span>: [<span class="str">"@babel/preset-env"</span>]
+}</code></pre>
+    </div></div>
+
+    <div class="step"><div class="step-num">4</div><div class="step-content">
+      <p><strong>Crée webpack.config.js</strong></p>
+<pre data-lang="webpack.config.js"><code><span class="kw">const</span> path = <span class="fn">require</span>(<span class="str">'path'</span>);
+<span class="kw">const</span> HtmlWebpackPlugin = <span class="fn">require</span>(<span class="str">'html-webpack-plugin'</span>);
+
+module.<span class="prop">exports</span> = {
+  <span class="prop">mode</span>: <span class="str">'development'</span>,
+  <span class="prop">entry</span>: <span class="str">'./src/index.js'</span>,
+  <span class="prop">output</span>: {
+    <span class="prop">filename</span>: <span class="str">'bundle.js'</span>,
+    <span class="prop">path</span>: path.<span class="fn">resolve</span>(__dirname, <span class="str">'dist'</span>),
+    <span class="prop">clean</span>: <span class="kw">true</span>,
+  },
+  <span class="prop">module</span>: {
+    <span class="prop">rules</span>: [
+      { <span class="prop">test</span>: <span class="kw">/\.js$/</span>, <span class="prop">exclude</span>: <span class="kw">/node_modules/</span>, <span class="prop">use</span>: <span class="str">'babel-loader'</span> },
+      { <span class="prop">test</span>: <span class="kw">/\.css$/</span>, <span class="prop">use</span>: [<span class="str">'style-loader'</span>, <span class="str">'css-loader'</span>] },
+    ],
+  },
+  <span class="prop">plugins</span>: [
+    <span class="kw">new</span> <span class="fn">HtmlWebpackPlugin</span>({ <span class="prop">template</span>: <span class="str">'./src/index.html'</span> }),
+  ],
+  <span class="prop">devtool</span>: <span class="str">'source-map'</span>,
+};</code></pre>
+    </div></div>
+
+    <div class="step"><div class="step-num">5</div><div class="step-content">
+      <p><strong>Lance le premier build</strong></p>
+<pre data-lang="bash"><code>npx webpack</code></pre>
+      <p>→ Vérifie que le dossier <code class="inline">dist/</code> a été créé avec <code class="inline">bundle.js</code> et <code class="inline">index.html</code> dedans.</p>
+    </div></div>
+  </div>
+
+  <div class="callout info"><span class="callout-icon">💡</span><p><code class="inline">npx webpack</code> : le préfixe <code class="inline">npx</code> permet d'exécuter un outil installé dans <code class="inline">node_modules</code> sans l'installer globalement sur la machine. Une fois les scripts définis dans <code class="inline">package.json</code>, on utilisera <code class="inline">npm run build</code> à la place.</p></div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo(5)">← Retour</button>
+    <button class="btn btn-primary" onclick="goTo(7)">Section suivante →</button>
+  </div>
+</div>
+
+<!-- ══ 7 : Dev Server & HMR ══════════════════════════════════ -->
+<div class="section" id="sec-7">
+  <div class="section-badge badge-advanced">Aller plus loin</div>
+  <h1>Dev Server<br>& HMR</h1>
+  <p>Relancer <code class="inline">npx webpack</code> à chaque modification, c'est vite épuisant. Le <strong>webpack-dev-server</strong> surveille tes fichiers en permanence et recharge le navigateur automatiquement à chaque sauvegarde.</p>
+
+  <h2>C'est quoi un serveur local ?</h2>
+
+  <div class="definition">
+    <div class="definition-icon">🖥️</div>
+    <div class="definition-body">
+      <div class="definition-term">Serveur local / localhost</div>
+      <p>Quand on développe, on ne peut pas simplement ouvrir un fichier HTML dans le navigateur — certaines fonctionnalités nécessitent un <strong>serveur</strong>. Un serveur local simule ce comportement sur ta machine. Il est accessible via l'adresse <code class="inline">http://localhost:3000</code>. <code class="inline">localhost</code> = ta propre machine. <code class="inline">3000</code> = le <em>port</em>, un numéro qui identifie l'application (comme un numéro d'appartement).</p>
+    </div>
+  </div>
+
+  <h2>Installation & configuration</h2>
+<pre data-lang="bash"><code>npm install --save-dev webpack-dev-server</code></pre>
+
+<pre data-lang="webpack.config.js"><code>module.<span class="prop">exports</span> = {
+  <span class="cmt">// ... entry, output, module, plugins...</span>
+  <span class="prop">devServer</span>: {
+    <span class="prop">static</span>: <span class="str">'./dist'</span>,  <span class="cmt">// Le dossier à servir</span>
+    <span class="prop">port</span>: <span class="num">3000</span>,        <span class="cmt">// Accessible sur http://localhost:3000</span>
+    <span class="prop">open</span>: <span class="kw">true</span>,        <span class="cmt">// Ouvre le navigateur automatiquement au démarrage</span>
+    <span class="prop">hot</span>: <span class="kw">true</span>,         <span class="cmt">// Active le HMR (voir ci-dessous)</span>
+    <span class="prop">compress</span>: <span class="kw">true</span>,    <span class="cmt">// Compresse les fichiers envoyés au navigateur</span>
+  },
+};</code></pre>
+
+<pre data-lang="package.json"><code>{
+  <span class="prop">"scripts"</span>: {
+    <span class="prop">"start"</span>: <span class="str">"webpack serve"</span>,          <span class="cmt">// Lance le dev server</span>
+    <span class="prop">"build"</span>: <span class="str">"webpack --mode production"</span>  <span class="cmt">// Build de production</span>
+  }
+}</code></pre>
+
+  <h2>HMR — Hot Module Replacement</h2>
+
+  <div class="definition">
+    <div class="definition-icon">🔥</div>
+    <div class="definition-body">
+      <div class="definition-term">Hot Module Replacement (remplacement de module à chaud)</div>
+      <p>Sans HMR, chaque modification recharge toute la page — tu perds l'état de l'application (formulaires remplis, position de scroll, etc.). Avec HMR activé (<code class="inline">hot: true</code>), <strong>Webpack ne met à jour que le module qui a changé</strong>, sans recharger toute la page. Tu modifies ta couleur CSS → le navigateur se met à jour instantanément, sans perdre ce que tu avais à l'écran.</p>
+    </div>
+  </div>
+
+  <h2>Une différence capitale à retenir</h2>
+
+  <table>
+    <tr><th>Commande</th><th>Usage</th><th>Ce qui se passe</th></tr>
+    <tr><td>npm start</td><td>Pendant le développement</td><td>Serveur local avec HMR, source maps, code non minifié. Aucun fichier écrit dans dist/</td></tr>
+    <tr><td>npm run build</td><td>Avant de mettre en production</td><td>Bundle minifié, optimisé, tree-shaking. Les vrais fichiers sont écrits dans dist/</td></tr>
+  </table>
+
+  <div class="callout"><span class="callout-icon">⚠️</span><p><strong>Point important :</strong> Le dev server ne génère <em>pas</em> de fichiers dans <code class="inline">dist/</code>. Il fonctionne entièrement <em>en mémoire</em> pour être rapide. Pour obtenir les vrais fichiers à déployer, il faut toujours faire <code class="inline">npm run build</code>.</p></div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo(6)">← Retour</button>
+    <button class="btn btn-primary" onclick="goTo(8)">Section suivante →</button>
+  </div>
+</div>
+
+<!-- ══ 8 : .gitignore ════════════════════════════════════════ -->
+<div class="section" id="sec-8">
+  <div class="section-badge badge-practice">Bonne pratique</div>
+  <h1>Le fichier<br>.gitignore</h1>
+  <p>Tu as remarqué qu'on parle souvent de <code class="inline">.gitignore</code>. C'est un fichier texte simple mais <strong>absolument indispensable dans tous tes projets</strong>. Il dit à Git quels fichiers et dossiers il doit complètement ignorer.</p>
+
+  <h2>Le problème sans .gitignore</h2>
+  <p>Imagine que tu travailles sur un projet et tu fais <code class="inline">git add .</code> pour tout versionner. Sans .gitignore, tu enverrais sur GitHub :</p>
+
+  <div class="concept red">
+    <div class="concept-title">node_modules/ — plusieurs centaines de Mo</div>
+    <p style="margin:0;font-size:0.86rem;">Ce dossier contient toutes les librairies installées par npm. Il peut contenir des <strong>dizaines de milliers de fichiers</strong> et peser des centaines de Mo. Personne n'a besoin de le versionner car un simple <code class="inline">npm install</code> le recrée entièrement depuis le <code class="inline">package.json</code>.</p>
+  </div>
+
+  <div class="concept orange">
+    <div class="concept-title">dist/ — un dossier généré automatiquement</div>
+    <p style="margin:0;font-size:0.86rem;">Ce dossier est produit par Webpack depuis ton code source. Il change à chaque build. Chaque développeur le recrée avec <code class="inline">npm run build</code>. Le versionner polluerait l'historique Git avec des changements sans valeur.</p>
+  </div>
+
+  <div class="concept red">
+    <div class="concept-title">.env — informations confidentielles</div>
+    <p style="margin:0;font-size:0.86rem;">Le fichier <code class="inline">.env</code> contient souvent des <strong>secrets</strong> : mots de passe de base de données, clés API (clés d'accès à des services payants comme Google Maps, Stripe, etc.). Les mettre sur GitHub, c'est les rendre publics — une grave faille de sécurité.</p>
+  </div>
+
+  <h2>L'analogie</h2>
+  <div class="analogy">
+    <div class="analogy-icon">📬</div>
+    <div class="analogy-body"><p>Imagine que Git est un livreur de courrier. Tu lui prépares un colis avec ton code. <strong>Le .gitignore, c'est la liste des choses à NE PAS mettre dans le colis</strong> — les brouillons, les outils de travail, les documents confidentiels. Seul le contenu final et partageable va dans le colis.</p></div>
+  </div>
+
+  <h2>Comment ça fonctionne ?</h2>
+  <p>Le fichier <code class="inline">.gitignore</code> se place à la <strong>racine du projet</strong>. Chaque ligne contient le nom d'un fichier ou dossier à ignorer. Une fois listé, Git fait comme si ce fichier n'existait pas.</p>
+
+<pre data-lang=".gitignore"><code><span class="cmt"># Le dièse (#) sert à écrire des commentaires</span>
+
+<span class="cmt"># Dépendances npm — TOUJOURS ignorer</span>
+node_modules/
+
+<span class="cmt"># Build Webpack — généré automatiquement</span>
+dist/
+
+<span class="cmt"># Variables d'environnement — TOUJOURS ignorer (données sensibles !)</span>
+.env
+.env.local
+.env.production
+
+<span class="cmt"># Fichier système créé automatiquement par macOS</span>
+.DS_Store
+
+<span class="cmt"># Fichiers de log (journaux d'erreurs) générés automatiquement</span>
+*.log
+npm-debug.log*</code></pre>
+
+  <div class="definition">
+    <div class="definition-icon">✏️</div>
+    <div class="definition-body">
+      <div class="definition-term">Syntaxe du .gitignore</div>
+      <p><code class="inline">dossier/</code> → ignore un dossier entier et tout son contenu.<br>
+      <code class="inline">*.log</code> → le <code class="inline">*</code> est un joker : ignore tous les fichiers dont l'extension est <code class="inline">.log</code>.<br>
+      <code class="inline">#</code> → commence un commentaire, la ligne est ignorée par Git.</p>
+    </div>
+  </div>
+
+  <div class="callout"><span class="callout-icon">⚠️</span><p><strong>Piège classique :</strong> Si tu as déjà commité un fichier <em>avant</em> de l'ajouter au .gitignore, Git continuera à le suivre même après. Il faut alors le désindexer avec : <code class="inline">git rm --cached nom-du-fichier</code>. Cette commande retire le fichier du suivi de Git sans le supprimer de ta machine.</p></div>
+
+  <div class="callout tip"><span class="callout-icon">✅</span><p><strong>Astuce :</strong> Le site <strong>gitignore.io</strong> génère un .gitignore adapté à tes technologies en quelques clics. Tape "Node", "Webpack", "macOS" et il produit un fichier complet automatiquement.</p></div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo(7)">← Retour</button>
+    <button class="btn btn-primary" onclick="goTo(9)">Section suivante →</button>
+  </div>
+</div>
+
+<!-- ══ 9 : Laravel Mix & co ══════════════════════════════════ -->
+<div class="section" id="sec-9">
+  <div class="section-badge badge-advanced">Aller plus loin</div>
+  <h1>Laravel Mix<br>& alternatives</h1>
+  <p>On a vu que configurer Webpack à la main demande du temps et de la rigueur. Des outils ont été créés pour <strong>simplifier ou même remplacer</strong> complètement cette configuration. Voici les principaux.</p>
+
+  <h2>Le problème de la config Webpack "à la main"</h2>
+  <p>Pour un projet standard — compiler du SCSS en CSS, transpiler l'ES6 avec Babel, gérer les images — on écrit facilement 50 à 80 lignes de configuration. C'est beaucoup pour un résultat qui est toujours le même. C'est là qu'interviennent les <strong>couches d'abstraction</strong>.</p>
+
+  <div class="definition">
+    <div class="definition-icon">🏗️</div>
+    <div class="definition-body">
+      <div class="definition-term">Abstraction</div>
+      <p>Une abstraction cache la complexité pour exposer une interface plus simple. Tu décris <em>ce que tu veux obtenir</em>, l'outil se charge de <em>comment y arriver</em>. Laravel Mix est une abstraction de Webpack.</p>
+    </div>
+  </div>
+
+  <h2>Laravel Mix</h2>
+  <p>Laravel Mix est une <strong>surcouche de Webpack</strong> créée pour le framework PHP Laravel, mais utilisable dans n'importe quel projet. Elle remplace des dizaines de lignes de config Webpack par quelques lignes très lisibles.</p>
+
+  <h3>Comparaison directe — même résultat, beaucoup moins de code</h3>
+<pre data-lang="webpack.config.js (sans Mix)"><code><span class="cmt">// ~60 lignes à écrire, comprendre et maintenir</span>
+module.<span class="prop">exports</span> = {
+  <span class="prop">entry</span>: <span class="str">'./src/js/app.js'</span>,
+  <span class="prop">output</span>: { <span class="prop">filename</span>: <span class="str">'app.js'</span>, <span class="prop">path</span>: <span class="fn">resolve</span>(<span class="str">'public/js'</span>) },
+  <span class="prop">module</span>: { <span class="prop">rules</span>: [
+    { <span class="prop">test</span>: <span class="kw">/\.js$/</span>, <span class="prop">use</span>: <span class="str">'babel-loader'</span>, <span class="prop">exclude</span>: <span class="kw">/node_modules/</span> },
+    { <span class="prop">test</span>: <span class="kw">/\.scss$/</span>, <span class="prop">use</span>: [<span class="str">'style-loader'</span>,<span class="str">'css-loader'</span>,<span class="str">'sass-loader'</span>] },
+  ]},
+  <span class="prop">plugins</span>: [ <span class="kw">new</span> <span class="fn">MiniCssExtractPlugin</span>(...), <span class="kw">new</span> <span class="fn">HtmlWebpackPlugin</span>(...) ],
+  <span class="cmt">// ... et ça continue</span>
+};</code></pre>
+
+<pre data-lang="webpack.mix.js (avec Laravel Mix)"><code><span class="kw">const</span> mix = <span class="fn">require</span>(<span class="str">'laravel-mix'</span>);
+
+<span class="cmt">// 3 lignes. Babel, source maps, minification en prod : tout inclus.</span>
+mix.<span class="fn">js</span>(<span class="str">'src/js/app.js'</span>, <span class="str">'public/js'</span>)
+   .<span class="fn">sass</span>(<span class="str">'src/scss/app.scss'</span>, <span class="str">'public/css'</span>);</code></pre>
+
+  <h3>Les méthodes Mix les plus utiles</h3>
+  <table>
+    <tr><th>Méthode</th><th>Ce qu'elle fait</th></tr>
+    <tr><td>mix.js(src, dest)</td><td>Bundle JS avec Babel automatiquement inclus</td></tr>
+    <tr><td>mix.sass(src, dest)</td><td>Compile le SCSS en CSS (le SCSS est un CSS amélioré avec des variables, de l'imbrication...)</td></tr>
+    <tr><td>mix.css(src, dest)</td><td>Traite du CSS standard via PostCSS</td></tr>
+    <tr><td>mix.copy(src, dest)</td><td>Copie des fichiers statiques (images, fonts…)</td></tr>
+    <tr><td>mix.version()</td><td>Ajoute un hash dans les noms de fichiers pour le cache busting</td></tr>
+    <tr><td>mix.browserSync()</td><td>Recharge le navigateur automatiquement (comme HMR)</td></tr>
+  </table>
+
+  <div class="callout tip"><span class="callout-icon">✅</span><p><strong>Quand utiliser Mix ?</strong> Sur un projet Laravel ou WordPress, ou quand on veut être opérationnel vite sans se battre avec la config Webpack. C'est le bon choix pour la majorité des projets PHP.</p></div>
+
+  <h2>Les autres outils du même type</h2>
+
+  <div class="tool-grid">
+    <div class="tool-card hl">
+      <h4>Vite <span class="tag tag-g">Tendance 2024</span></h4>
+      <div class="tool-sub">par Evan You, créateur de Vue.js</div>
+      <ul>
+        <li>⚡ Démarrage quasi-instantané (pas de bundle en dev)</li>
+        <li>🔥 HMR ultra-rapide nativement</li>
+        <li>🎯 Config très simple, moderne</li>
+        <li>✅ Support React, Vue, Svelte…</li>
+        <li>📦 Build via Rollup en production</li>
+      </ul>
+    </div>
+    <div class="tool-card">
+      <h4>Parcel <span class="tag tag-b">Zéro config</span></h4>
+      <div class="tool-sub">bundler sans configuration</div>
+      <ul>
+        <li>🚀 Aucune config à écrire</li>
+        <li>🔍 Détecte automatiquement le type des fichiers</li>
+        <li>📝 Tu lui pointes ton index.html, il fait le reste</li>
+        <li>⚠️ Moins de contrôle que Webpack</li>
+        <li>✅ Parfait pour apprendre ou prototyper</li>
+      </ul>
+    </div>
+    <div class="tool-card">
+      <h4>Rollup <span class="tag tag-o">Librairies</span></h4>
+      <div class="tool-sub">par Rich Harris, créateur de Svelte</div>
+      <ul>
+        <li>📦 Spécialisé dans la création de librairies npm</li>
+        <li>🌳 Tree-shaking encore plus efficace que Webpack</li>
+        <li>📤 Peut exporter en plusieurs formats</li>
+        <li>✅ Utilisé par React, Vue, Vite en interne</li>
+      </ul>
+    </div>
+    <div class="tool-card">
+      <h4>esbuild <span class="tag tag-g">Ultra-rapide</span></h4>
+      <div class="tool-sub">écrit en Go (pas en JavaScript)</div>
+      <ul>
+        <li>⚡ 10 à 100× plus rapide que Webpack</li>
+        <li>📝 Minification et transpilation intégrées</li>
+        <li>⚠️ Moins de plugins disponibles</li>
+        <li>✅ Utilisé par Vite en interne</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Lequel choisir selon le contexte ?</h2>
+  <table>
+    <tr><th>Situation</th><th>Outil recommandé</th></tr>
+    <tr><td>Projet Laravel ou WordPress</td><td>Laravel Mix</td></tr>
+    <tr><td>App React ou Vue moderne</td><td>Vite</td></tr>
+    <tr><td>Débutant, prototype rapide</td><td>Parcel</td></tr>
+    <tr><td>Créer une librairie npm</td><td>Rollup</td></tr>
+    <tr><td>Contrôle total, cas complexe</td><td>Webpack directement</td></tr>
+  </table>
+
+  <div class="callout info"><span class="callout-icon">💡</span><p><strong>Pourquoi avoir appris Webpack quand même ?</strong> Parce que <em>tous</em> ces outils reposent sur les mêmes concepts : entry, output, loaders, plugins, modes. Comprendre Webpack, c'est comprendre le fondement de tout l'écosystème. Laravel Mix ou Vite ne seront jamais des boîtes noires pour toi.</p></div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo(8)">← Retour</button>
+    <button class="btn btn-primary" onclick="goTo(10)">Quiz final →</button>
+  </div>
+</div>
+
+<!-- ══ 10 : Quiz ═════════════════════════════════════════════ -->
+<div class="section" id="sec-10">
+  <div class="section-badge badge-practice">Quiz</div>
+  <h1>Quiz final</h1>
+  <p>7 questions pour valider tout ce qu'on a vu ensemble. Bonne chance !</p>
+
+  <div class="quiz" id="q1">
+    <div class="quiz-q">1. Qu'est-ce que Babel fait exactement dans un projet Webpack ?</div>
+    <div class="quiz-option" onclick="answer(this,'q1',false)">🔴 Il regroupe tous les fichiers JS en un seul bundle</div>
+    <div class="quiz-option" onclick="answer(this,'q1',true)">🟢 Il transforme le JavaScript ES6+ en ES5 pour que les anciens navigateurs comprennent le code</div>
+    <div class="quiz-option" onclick="answer(this,'q1',false)">🔴 Il compresse les images pour réduire leur poids</div>
+    <div class="quiz-feedback" id="q1-feedback">✅ <strong>Correct !</strong> Babel est un <em>transpileur</em> : il convertit la syntaxe JavaScript moderne (ES6+) vers une version plus ancienne (ES5) compatible avec tous les navigateurs.</div>
+  </div>
+
+  <div class="quiz" id="q2">
+    <div class="quiz-q">2. Quelle est la différence entre <code class="inline">dependencies</code> et <code class="inline">devDependencies</code> dans le package.json ?</div>
+    <div class="quiz-option" onclick="answer(this,'q2',false)">🔴 Il n'y a aucune différence, c'est juste une convention d'écriture</div>
+    <div class="quiz-option" onclick="answer(this,'q2',true)">🟢 dependencies = nécessaires pour que l'appli tourne en ligne. devDependencies = outils de build uniquement, pas installés en production</div>
+    <div class="quiz-option" onclick="answer(this,'q2',false)">🔴 devDependencies s'installe avec Yarn, dependencies avec npm</div>
+    <div class="quiz-feedback" id="q2-feedback">✅ <strong>Correct !</strong> Webpack, Babel, ESLint → <code class="inline">devDependencies</code>. React ou une librairie utilisée dans l'appli → <code class="inline">dependencies</code>.</div>
+  </div>
+
+  <div class="quiz" id="q3">
+    <div class="quiz-q">3. Dans la règle CSS <code class="inline">use: ['style-loader', 'css-loader']</code>, dans quel ordre les loaders s'appliquent-ils ?</div>
+    <div class="quiz-option" onclick="answer(this,'q3',false)">🔴 style-loader en premier, puis css-loader</div>
+    <div class="quiz-option" onclick="answer(this,'q3',true)">🟢 css-loader en premier (les loaders s'appliquent de droite à gauche), puis style-loader</div>
+    <div class="quiz-option" onclick="answer(this,'q3',false)">🔴 L'ordre n'a aucune importance</div>
+    <div class="quiz-feedback" id="q3-feedback">✅ <strong>Correct !</strong> Les loaders s'appliquent <strong>de droite à gauche</strong>. css-loader lit et interprète le CSS en premier, puis style-loader l'injecte dans le DOM de la page.</div>
+  </div>
+
+  <div class="quiz" id="q4">
+    <div class="quiz-q">4. À quoi sert la minification du code en mode production ?</div>
+    <div class="quiz-option" onclick="answer(this,'q4',false)">🔴 À rendre le code plus lisible pour les autres développeurs</div>
+    <div class="quiz-option" onclick="answer(this,'q4',false)">🔴 À corriger les bugs automatiquement avant la mise en ligne</div>
+    <div class="quiz-option" onclick="answer(this,'q4',true)">🟢 À supprimer les espaces, commentaires et raccourcir les noms pour réduire la taille du fichier</div>
+    <div class="quiz-feedback" id="q4-feedback">✅ <strong>Correct !</strong> La minification rend le code illisible pour un humain mais beaucoup plus léger à télécharger pour le navigateur. Le code s'exécute exactement pareil.</div>
+  </div>
+
+  <div class="quiz" id="q5">
+    <div class="quiz-q">5. Pourquoi met-on un hash (ex: <code class="inline">style.a3f9c2.css</code>) dans le nom des fichiers générés en production ?</div>
+    <div class="quiz-option" onclick="answer(this,'q5',true)">🟢 Pour forcer le navigateur à télécharger la nouvelle version quand le contenu change, même s'il avait l'ancienne en cache</div>
+    <div class="quiz-option" onclick="answer(this,'q5',false)">🔴 Pour rendre le nom de fichier plus sécurisé</div>
+    <div class="quiz-option" onclick="answer(this,'q5',false)">🔴 Pour faciliter le débogage en production</div>
+    <div class="quiz-feedback" id="q5-feedback">✅ <strong>Correct !</strong> C'est le <em>cache busting</em>. Le navigateur met les fichiers en cache pour aller plus vite. Changer le nom du fichier (via le hash) force le navigateur à re-télécharger la nouvelle version.</div>
+  </div>
+
+  <div class="quiz" id="q6">
+    <div class="quiz-q">6. Pourquoi faut-il absolument mettre <code class="inline">node_modules/</code> dans le .gitignore ?</div>
+    <div class="quiz-option" onclick="answer(this,'q6',false)">🔴 Pour que le projet se charge plus vite sur GitHub</div>
+    <div class="quiz-option" onclick="answer(this,'q6',true)">🟢 Parce qu'il est généré automatiquement par npm install, pèse des centaines de Mo, et chaque développeur peut le recréer lui-même</div>
+    <div class="quiz-option" onclick="answer(this,'q6',false)">🔴 Pour cacher le code des librairies aux autres développeurs</div>
+    <div class="quiz-feedback" id="q6-feedback">✅ <strong>Correct !</strong> <code class="inline">node_modules/</code> est recrée depuis le <code class="inline">package.json</code> avec un simple <code class="inline">npm install</code>. Versionner ce dossier alourdirait inutilement le repo de plusieurs centaines de Mo.</div>
+  </div>
+
+  <div class="quiz" id="q7">
+    <div class="quiz-q">7. Tu travailles sur un projet Laravel. Tu veux compiler du SCSS en CSS et bundler du JS sans écrire 60 lignes de config Webpack. Quel outil utilises-tu ?</div>
+    <div class="quiz-option" onclick="answer(this,'q7',false)">🔴 Rollup, spécialisé dans les projets PHP</div>
+    <div class="quiz-option" onclick="answer(this,'q7',false)">🔴 Parcel, car c'est le plus rapide et sans config</div>
+    <div class="quiz-option" onclick="answer(this,'q7',true)">🟢 Laravel Mix, une surcouche de Webpack pensée pour l'écosystème Laravel</div>
+    <div class="quiz-feedback" id="q7-feedback">✅ <strong>Correct !</strong> Laravel Mix configure Webpack automatiquement. Ce qui prend 60 lignes en Webpack brut s'écrit en 3 lignes avec Mix. C'est le choix naturel pour Laravel et WordPress.</div>
+  </div>
+
+  <div id="quiz-result" style="display:none;margin-top:2rem;">
+    <div class="done-screen">
+      <span class="done-icon">🎉</span>
+      <h2 style="font-size:1.8rem;letter-spacing:-1px;">Cours terminé !</h2>
+      <p style="font-size:1rem;max-width:440px;margin:1rem auto;">Tu maîtrises maintenant les fondations : Node.js, npm, ES6, Babel, Webpack, et les outils alternatifs. Il ne reste plus qu'à pratiquer sur un vrai projet !</p>
+      <div style="margin-top:1.5rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="goTo(0)">🔄 Revoir depuis le début</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row"><button class="btn btn-secondary" onclick="goTo(9)">← Retour</button></div>
+</div>
+
+</main>
+</div>
+
+<script>
+  let current = 0;
+  const total = 11;
+  const answered = {};
+  let quizCount = 0;
+
+  function goTo(index) {
+    document.getElementById('sec-' + current).classList.remove('active');
+    document.querySelectorAll('.nav-item')[current].classList.remove('active');
+    document.querySelectorAll('.nav-item')[current].classList.add('done');
+    current = index;
+    document.getElementById('sec-' + current).classList.add('active');
+    document.querySelectorAll('.nav-item')[current].classList.add('active');
+    document.querySelectorAll('.nav-item')[current].classList.remove('done');
+    const pct = ((current + 1) / total) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = (current + 1) + ' / ' + total;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function answer(el, qid, correct) {
+    if (answered[qid]) return;
+    answered[qid] = true;
+    el.classList.add(correct ? 'correct' : 'wrong');
+    document.getElementById(qid + '-feedback').classList.add('show');
+    quizCount++;
+    if (quizCount === 7) {
+      setTimeout(() => {
+        document.getElementById('quiz-result').style.display = 'block';
+        document.getElementById('quiz-result').scrollIntoView({ behavior: 'smooth' });
+      }, 600);
+    }
+  }
+</script>
+</body>
+</html>
